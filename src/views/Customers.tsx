@@ -14,7 +14,7 @@ export default function Customers() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -75,7 +75,9 @@ export default function Customers() {
         .update(formData)
         .eq('id', editingCustomer.id);
       if (!error) {
-        setShowModal(false);
+        setShowForm(false);
+        setEditingCustomer(null);
+        setFormData({ name: '', mobile: '', email: '', address: '' });
         fetchCustomers();
       }
     } else {
@@ -83,13 +85,15 @@ export default function Customers() {
         .from('customers')
         .insert([formData]);
       if (!error) {
-        setShowModal(false);
+        setShowForm(false);
+        setEditingCustomer(null);
+        setFormData({ name: '', mobile: '', email: '', address: '' });
         fetchCustomers();
       }
     }
   };
 
-  const openEditModal = (customer: Customer) => {
+  const openEditForm = (customer: Customer) => {
     setEditingCustomer(customer);
     setFormData({
       name: customer.name,
@@ -97,13 +101,13 @@ export default function Customers() {
       email: customer.email || '',
       address: customer.address || ''
     });
-    setShowModal(true);
+    setShowForm(true);
   };
 
-  const openAddModal = () => {
+  const openAddForm = () => {
     setEditingCustomer(null);
     setFormData({ name: '', mobile: '', email: '', address: '' });
-    setShowModal(true);
+    setShowForm(true);
   };
 
   const deleteCustomer = async (id: string) => {
@@ -121,7 +125,7 @@ export default function Customers() {
           <p className="text-zinc-500 dark:text-zinc-400">{t('customersDesc')}</p>
         </div>
         <button 
-          onClick={openAddModal}
+          onClick={openAddForm}
           className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
         >
           <UserPlus size={20} />
@@ -140,6 +144,75 @@ export default function Customers() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          </form>
+        </div>
+      )}
+
+      {showForm && (
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
+          <div className="p-6 border-b border-zinc-100 dark:border-zinc-800">
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+              {editingCustomer ? t('editCustomer') : t('addCustomer')}
+            </h3>
+          </div>
+          <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('fullName')}</label>
+              <input
+                required
+                type="text"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('mobileNumber')}</label>
+              <input
+                required
+                type="tel"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                value={formData.mobile}
+                onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('emailAddress')}</label>
+              <input
+                type="email"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('address')}</label>
+              <textarea
+                rows={3}
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+            </div>
+            <div className="md:col-span-2 flex gap-3 justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingCustomer(null);
+                  setFormData({ name: '', mobile: '', email: '', address: '' });
+                }}
+                className="px-4 py-2.5 text-sm font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl transition-colors shadow-sm"
+              >
+                {editingCustomer ? t('update') : t('save')}
+              </button>
+            </div>
           </form>
         </div>
       )}
@@ -203,7 +276,7 @@ export default function Customers() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
-                          onClick={() => openEditModal(customer)}
+                          onClick={() => openEditForm(customer)}
                           className="p-2 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
                           title={t('edit')}
                         >
@@ -231,73 +304,6 @@ export default function Customers() {
           </table>
         </div>
       </div>
-
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border border-zinc-200 dark:border-zinc-800">
-            <div className="p-6 border-b border-zinc-100 dark:border-zinc-800">
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                {editingCustomer ? t('editCustomer') : t('addCustomer')}
-              </h3>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('fullName')}</label>
-                <input 
-                  required
-                  type="text" 
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('mobileNumber')}</label>
-                <input 
-                  required
-                  type="tel" 
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.mobile}
-                  onChange={(e) => setFormData({...formData, mobile: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('emailAddress')}</label>
-                <input 
-                  type="email" 
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('address')}</label>
-                <textarea 
-                  rows={3}
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors"
-                >
-                  {t('cancel')}
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl transition-colors shadow-sm"
-                >
-                  {editingCustomer ? t('update') : t('save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
