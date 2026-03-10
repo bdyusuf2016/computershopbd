@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -59,6 +60,7 @@ const MOCK_APPLICATIONS: JobApplication[] = [
 
 export default function JobApplications() {
   const { t } = useLanguage();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'application' | 'office'>('application');
   const [applications, setApplications] = useState<JobApplication[]>(MOCK_APPLICATIONS);
   const [officeCodes, setOfficeCodes] = useState<OfficeCodeItem[]>(DEFAULT_OFFICES);
@@ -89,6 +91,17 @@ export default function JobApplications() {
   useEffect(() => {
     fetchOfficeCodes();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('section') !== 'applications-table') return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById('applications-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [location.search]);
 
   useEffect(() => {
     const stored = localStorage.getItem(PAYMENT_METHODS_STORAGE_KEY);
@@ -563,7 +576,7 @@ export default function JobApplications() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+      <div id="applications-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

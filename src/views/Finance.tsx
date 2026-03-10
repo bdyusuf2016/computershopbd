@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Plus, Search, Filter, TrendingUp, TrendingDown, DollarSign, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Transaction } from '../types';
@@ -7,6 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 export default function Finance() {
   const { t } = useLanguage();
+  const location = useLocation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +22,17 @@ export default function Finance() {
   useEffect(() => {
     fetchTransactions();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('section') !== 'transactions-table') return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById('transactions-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [location.search]);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -84,7 +97,7 @@ export default function Finance() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
+      <div id="transactions-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
         <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <h3 className="font-bold text-zinc-900 dark:text-zinc-100">{t('recentTransactions')}</h3>
           <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">

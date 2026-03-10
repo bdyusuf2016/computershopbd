@@ -81,3 +81,47 @@ CREATE TABLE transactions (
   date DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Role permissions table (role + user type based access control)
+CREATE TABLE role_permissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'staff')),
+  user_type TEXT CHECK (user_type IN ('owner', 'manager', 'operator')),
+  module_id TEXT NOT NULL,
+  module_name TEXT NOT NULL,
+  can_read BOOLEAN NOT NULL DEFAULT false,
+  can_write BOOLEAN NOT NULL DEFAULT false,
+  can_update BOOLEAN NOT NULL DEFAULT false,
+  can_delete BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Ensure one permission record per role/user_type/module profile.
+CREATE UNIQUE INDEX role_permissions_unique_profile_module
+  ON role_permissions (role, COALESCE(user_type, 'admin'), module_id);
+
+-- Enable Row Level Security for role_permissions.
+ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
+
+-- Development-friendly policies so current client app can read/write with anon/authenticated keys.
+-- Tighten these for production with proper user-based conditions.
+CREATE POLICY role_permissions_select_policy ON role_permissions
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY role_permissions_insert_policy ON role_permissions
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY role_permissions_update_policy ON role_permissions
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY role_permissions_delete_policy ON role_permissions
+  FOR DELETE
+  TO anon, authenticated
+  USING (true);

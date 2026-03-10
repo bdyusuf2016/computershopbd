@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Search, UserPlus, MoreVertical, Edit2, Trash2, History, Phone, Mail, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Customer } from '../types';
@@ -7,6 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 export default function Customers() {
   const { t } = useLanguage();
+  const location = useLocation();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,6 +24,17 @@ export default function Customers() {
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('section') !== 'customers-table') return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById('customers-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+
+    return () => window.clearTimeout(timer);
+  }, [location.search]);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -127,7 +140,7 @@ export default function Customers() {
         </form>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
+      <div id="customers-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

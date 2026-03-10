@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, 
   Users, 
@@ -34,9 +35,26 @@ const data = [
   { name: 'Sun', income: 3490, expense: 4300 },
 ];
 
-const StatCard = ({ title, value, icon: Icon, trend, trendValue, color }: any) => (
-  <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors duration-200">
-    <div className="flex items-start justify-between mb-4">
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  trend?: 'up' | 'down';
+  trendValue?: string;
+  color: string;
+  onClick?: () => void;
+}
+
+const StatCard = ({ title, value, icon: Icon, trend, trendValue, color, onClick }: StatCardProps) => (
+  <div className={`bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors duration-200 ${onClick ? 'hover:border-emerald-300 dark:hover:border-emerald-700' : ''}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
+      disabled={!onClick}
+      title={onClick ? 'Click to view details' : undefined}
+    >
+      <div className="flex items-start justify-between mb-4">
       <div className={`p-3 rounded-xl ${color}`}>
         <Icon size={24} className="text-white" />
       </div>
@@ -46,14 +64,19 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, color }: any) =
           {trendValue}
         </div>
       )}
-    </div>
-    <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">{title}</p>
-    <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</h3>
+      </div>
+      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">{title}</p>
+      <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</h3>
+      {onClick && (
+        <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">Click to view details</p>
+      )}
+    </button>
   </div>
 );
 
 export default function Dashboard() {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   
   const [stats, setStats] = useState({
     todayIncome: language === 'bn' ? '৳ ১২,৪৫০' : '৳ 12,450',
@@ -97,6 +120,7 @@ export default function Dashboard() {
           trend="up" 
           trendValue="12%" 
           color="bg-emerald-500" 
+          onClick={() => navigate('/finance?section=transactions-table')}
         />
         <StatCard 
           title={t('todayExpense')} 
@@ -105,6 +129,7 @@ export default function Dashboard() {
           trend="down" 
           trendValue="5%" 
           color="bg-rose-500" 
+          onClick={() => navigate('/finance?section=transactions-table')}
         />
         <StatCard 
           title={t('totalCustomers')} 
@@ -113,12 +138,14 @@ export default function Dashboard() {
           trend="up" 
           trendValue="8%" 
           color="bg-blue-500" 
+          onClick={() => navigate('/customers?section=customers-table')}
         />
         <StatCard 
           title={t('pendingJobs')} 
           value={stats.pendingJobs} 
           icon={Clock} 
           color="bg-amber-500" 
+          onClick={() => navigate('/job-applications?section=applications-table')}
         />
       </div>
 
