@@ -327,7 +327,7 @@ export default function Billing() {
 
       {/* Hidden Print Template */}
       <div className="hidden">
-        <div ref={printRef} className="p-12 text-zinc-900 font-sans">
+        <div ref={printRef} className="relative min-h-[1056px] p-12 pb-32 text-zinc-900 font-sans">
           <div className="flex justify-between items-start mb-12">
             <div>
               <h1 className="text-3xl font-bold text-emerald-600 mb-2">কম্পসার্ভ প্রো</h1>
@@ -390,7 +390,7 @@ export default function Billing() {
             </div>
           </div>
 
-          <div className="mt-24 pt-12 border-t border-zinc-100 text-center text-zinc-400 text-xs">
+          <div className="absolute left-12 right-12 bottom-10 border-t border-zinc-100 pt-6 text-center text-zinc-400 text-xs">
             <p>{language === 'bn' ? 'আমাদের সাথে ব্যবসা করার জন্য ধন্যবাদ!' : 'Thank you for doing business with us!'}</p>
             <p>{language === 'bn' ? 'এটি একটি কম্পিউটার জেনারেটেড ইনভয়েস।' : 'This is a computer generated invoice.'}</p>
           </div>
