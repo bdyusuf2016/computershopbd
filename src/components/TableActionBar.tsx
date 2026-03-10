@@ -16,17 +16,31 @@ const printElementById = (targetId: string) => {
     return;
   }
 
-  const printWindow = window.open('', '_blank', 'width=1200,height=800');
-  if (!printWindow) {
-    window.print();
-    return;
-  }
-
   const styleMarkup = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
     .map((node) => node.outerHTML)
     .join('\n');
 
-  printWindow.document.write(`
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('title', 'print-frame');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const printDocument = iframe.contentWindow?.document;
+  const printWindow = iframe.contentWindow;
+
+  if (!printDocument || !printWindow) {
+    iframe.remove();
+    window.print();
+    return;
+  }
+
+  printDocument.open();
+  printDocument.write(`
     <!doctype html>
     <html>
       <head>
@@ -34,7 +48,11 @@ const printElementById = (targetId: string) => {
         <title>Print</title>
         ${styleMarkup}
         <style>
-          body { margin: 16px; }
+          body {
+            margin: 16px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         </style>
       </head>
       <body>
@@ -42,10 +60,41 @@ const printElementById = (targetId: string) => {
       </body>
     </html>
   `);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-  printWindow.close();
+  printDocument.close();
+
+  const cleanup = () => {
+    window.setTimeout(() => iframe.remove(), 300);
+  };
+
+  const triggerPrint = () => {
+    printWindow.focus();
+    printWindow.print();
+    cleanup();
+  };
+
+  const images = Array.from(printDocument.images);
+  if (images.length === 0) {
+    window.setTimeout(triggerPrint, 150);
+    return;
+  }
+
+  let loadedImages = 0;
+  const markLoaded = () => {
+    loadedImages += 1;
+    if (loadedImages === images.length) {
+      window.setTimeout(triggerPrint, 150);
+    }
+  };
+
+  images.forEach((image) => {
+    if (image.complete) {
+      markLoaded();
+      return;
+    }
+
+    image.addEventListener('load', markLoaded, { once: true });
+    image.addEventListener('error', markLoaded, { once: true });
+  });
 };
 
 export default function TableActionBar({
