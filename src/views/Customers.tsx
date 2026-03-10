@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, UserPlus, MoreVertical, Edit2, Trash2, History, Phone, Mail, MapPin } from 'lucide-react';
+import { Search, Edit2, Trash2, History, Phone, Mail, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Customer } from '../types';
 import { format } from 'date-fns';
@@ -14,7 +14,6 @@ export default function Customers() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -75,7 +74,6 @@ export default function Customers() {
         .update(formData)
         .eq('id', editingCustomer.id);
       if (!error) {
-        setShowForm(false);
         setEditingCustomer(null);
         setFormData({ name: '', mobile: '', email: '', address: '' });
         fetchCustomers();
@@ -85,7 +83,6 @@ export default function Customers() {
         .from('customers')
         .insert([formData]);
       if (!error) {
-        setShowForm(false);
         setEditingCustomer(null);
         setFormData({ name: '', mobile: '', email: '', address: '' });
         fetchCustomers();
@@ -101,13 +98,6 @@ export default function Customers() {
       email: customer.email || '',
       address: customer.address || ''
     });
-    setShowForm(true);
-  };
-
-  const openAddForm = () => {
-    setEditingCustomer(null);
-    setFormData({ name: '', mobile: '', email: '', address: '' });
-    setShowForm(true);
   };
 
   const deleteCustomer = async (id: string) => {
@@ -124,13 +114,6 @@ export default function Customers() {
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{t('customersTitle')}</h1>
           <p className="text-zinc-500 dark:text-zinc-400">{t('customersDesc')}</p>
         </div>
-        <button 
-          onClick={openAddForm}
-          className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-        >
-          <UserPlus size={20} />
-          {t('addCustomer')}
-        </button>
       </div>
 
       {showFilters && (
@@ -148,74 +131,60 @@ export default function Customers() {
         </div>
       )}
 
-      {showForm && (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
-          <div className="p-6 border-b border-zinc-100 dark:border-zinc-800">
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              {editingCustomer ? t('editCustomer') : t('addCustomer')}
-            </h3>
-          </div>
-          <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('fullName')}</label>
-              <input
-                required
-                type="text"
-                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('mobileNumber')}</label>
-              <input
-                required
-                type="tel"
-                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                value={formData.mobile}
-                onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('emailAddress')}</label>
-              <input
-                type="email"
-                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('address')}</label>
-              <textarea
-                rows={3}
-                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
-            </div>
-            <div className="md:col-span-2 flex gap-3 justify-end pt-2">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-3 transition-colors duration-200">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-2 items-center">
+          <input
+            required
+            type="text"
+            placeholder={t('fullName')}
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
+          <input
+            required
+            type="tel"
+            placeholder={t('mobileNumber')}
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+            value={formData.mobile}
+            onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+          />
+          <input
+            type="email"
+            placeholder={t('emailAddress')}
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          />
+          <input
+            type="text"
+            placeholder={t('address')}
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm xl:col-span-2"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          />
+          <div className="flex gap-2 xl:justify-end">
+            {editingCustomer && (
               <button
                 type="button"
                 onClick={() => {
-                  setShowForm(false);
                   setEditingCustomer(null);
                   setFormData({ name: '', mobile: '', email: '', address: '' });
                 }}
-                className="px-4 py-2.5 text-sm font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors"
+                className="px-3 py-2.5 text-sm font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded-xl"
               >
                 {t('cancel')}
               </button>
-              <button
-                type="submit"
-                className="px-5 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl transition-colors shadow-sm"
-              >
-                {editingCustomer ? t('update') : t('save')}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+            )}
+            <button
+              type="submit"
+              className="px-4 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl transition-colors"
+            >
+              {editingCustomer ? t('update') : t('save')}
+            </button>
+          </div>
+        </form>
+      </div>
 
       <div id="customers-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
         <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} printTargetId="customers-table-data" />
