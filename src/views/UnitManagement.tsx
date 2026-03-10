@@ -30,7 +30,7 @@ const MOCK_UNITS: Unit[] = [
 export default function UnitManagement() {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
-  const [units, setUnits] = useState<Unit[]>(MOCK_UNITS);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [formData, setFormData] = useState({

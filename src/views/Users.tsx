@@ -63,7 +63,7 @@ export default function Users() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState<SystemUser[]>(MOCK_USERS);
+  const [users, setUsers] = useState<SystemUser[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [formData, setFormData] = useState({

@@ -93,10 +93,6 @@ CREATE TABLE shop_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-INSERT INTO shop_settings (id, name, owner, address, mobile, email)
-VALUES ('default', 'CompServPro Digital Shop', 'Admin User', '123 Main Street, Dhaka, Bangladesh', '01700000000', 'contact@compservpro.com')
-ON CONFLICT (id) DO NOTHING;
-
 ALTER TABLE shop_settings ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY shop_settings_select_policy ON shop_settings

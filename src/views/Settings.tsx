@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Save, Store, User, Shield, Database, Globe, Moon, Sun, Settings as SettingsIcon, Download, Upload, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { Save, Store, User, Shield, Database, Globe, Moon, Sun, Settings as SettingsIcon, Download, Upload, RefreshCw, Trash2, Wifi, WifiOff } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -23,6 +23,19 @@ const BACKUP_TABLES = [
   'transactions',
   'role_permissions',
   'user_permission_overrides',
+] as const;
+
+const CLEAR_TABLES = [
+  'invoice_items',
+  'online_services',
+  'invoices',
+  'customers',
+  'inventory',
+  'transactions',
+  'role_permissions',
+  'user_permission_overrides',
+  'office_codes',
+  'shop_settings',
 ] as const;
 
 export default function Settings() {
@@ -68,6 +81,7 @@ export default function Settings() {
   );
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isClearingDemoData, setIsClearingDemoData] = useState(false);
   const restoreFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -264,6 +278,44 @@ export default function Settings() {
 
   const openRestorePicker = () => {
     restoreFileRef.current?.click();
+  };
+
+  const clearLocalDemoData = () => {
+    localStorage.removeItem(SHOP_INFO_STORAGE_KEY);
+    localStorage.removeItem(INVOICE_TEMPLATE_STORAGE_KEY);
+    localStorage.removeItem(PAYMENT_METHODS_STORAGE_KEY);
+    localStorage.removeItem('auth_user');
+
+    setShopInfo(DEFAULT_SHOP_INFO);
+    setInvoiceTemplate(DEFAULT_INVOICE_TEMPLATE);
+    setPaymentMethods(DEFAULT_PAYMENT_METHODS);
+    window.dispatchEvent(new CustomEvent('shop-info-updated', { detail: DEFAULT_SHOP_INFO }));
+  };
+
+  const handleClearDemoData = async () => {
+    const confirmed = window.confirm(
+      'This will permanently remove demo/test data from local storage and Supabase tables. Continue?',
+    );
+    if (!confirmed) return;
+
+    setIsClearingDemoData(true);
+    try {
+      clearLocalDemoData();
+
+      if (isSupabaseConfigured) {
+        for (const table of CLEAR_TABLES) {
+          await replaceTableData(table, []);
+        }
+      }
+
+      alert('Demo data cleared successfully.');
+      await testConnection();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed to clear demo data';
+      alert(msg);
+    } finally {
+      setIsClearingDemoData(false);
+    }
   };
 
   useEffect(() => {
@@ -569,6 +621,15 @@ export default function Settings() {
               >
                 <Upload size={16} />
                 {isRestoring ? 'Restoring...' : 'Restore Backup'}
+              </button>
+              <button
+                type="button"
+                onClick={handleClearDemoData}
+                disabled={isClearingDemoData}
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 disabled:bg-rose-400 rounded-xl transition-colors"
+              >
+                <Trash2 size={16} />
+                {isClearingDemoData ? 'Clearing...' : 'Clear Demo Data'}
               </button>
               <input
                 ref={restoreFileRef}

@@ -33,7 +33,7 @@ const MOCK_CATEGORIES: Category[] = [
 export default function CategoryManagement() {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
-  const [categories, setCategories] = useState<Category[]>(MOCK_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);

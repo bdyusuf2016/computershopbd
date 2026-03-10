@@ -26,43 +26,13 @@ type OfficeCodeItem = {
   created_at?: string;
 };
 
-const DEFAULT_OFFICES: OfficeCodeItem[] = [
-  { id: 'oc-1', code: 'BR-01', name: 'Bangladesh Railway', url: 'https://railway.gov.bd' },
-  { id: 'oc-2', code: 'PR-01', name: 'Primary Teacher Recruitment', url: 'https://dpe.gov.bd' },
-];
-
-const MOCK_APPLICATIONS: JobApplication[] = [
-  {
-    id: '1',
-    office_code: 'BR-01',
-    applicant_name: 'Abdur Rahman',
-    user_id: 'rahman123',
-    mobile_no: '01712345678',
-    amount: 500,
-    password: 'password123',
-    status: 'pending',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    office_code: 'PR-01',
-    applicant_name: 'Fatima Khatun',
-    user_id: 'fatima99',
-    mobile_no: '01887654321',
-    amount: 650,
-    password: 'secretpassword',
-    status: 'completed',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
+const DEFAULT_OFFICES: OfficeCodeItem[] = [];
 
 export default function JobApplications() {
   const { t } = useLanguage();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<'application' | 'office'>('application');
-  const [applications, setApplications] = useState<JobApplication[]>(MOCK_APPLICATIONS);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [officeCodes, setOfficeCodes] = useState<OfficeCodeItem[]>(DEFAULT_OFFICES);
   const [officeCodesLoading, setOfficeCodesLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

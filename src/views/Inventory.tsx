@@ -59,7 +59,7 @@ const MOCK_INVENTORY: InventoryItem[] = [
 
 export default function Inventory() {
   const { t } = useLanguage();
-  const [items, setItems] = useState<InventoryItem[]>(MOCK_INVENTORY);
+  const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);

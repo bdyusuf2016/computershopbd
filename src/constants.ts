@@ -47,11 +47,11 @@ export const SHOP_INFO_STORAGE_KEY = 'shop_info_v1';
 export const INVOICE_TEMPLATE_STORAGE_KEY = 'invoice_template_v1';
 
 export const DEFAULT_SHOP_INFO = {
-  name: 'CompServPro Digital Shop',
-  owner: 'Admin User',
-  address: '123 Main Street, Dhaka, Bangladesh',
-  mobile: '01700000000',
-  email: 'contact@compservpro.com',
+  name: '',
+  owner: '',
+  address: '',
+  mobile: '',
+  email: '',
 };
 
 export const DEFAULT_INVOICE_TEMPLATE = {
