@@ -20,14 +20,21 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, X } from 'lucide-react';
 import { DEFAULT_SHOP_INFO, SHOP_INFO_STORAGE_KEY } from '../constants';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
+type SidebarProps = {
+  isCollapsed: boolean;
+  isMobile: boolean;
+  isMobileOpen: boolean;
+  onClose: () => void;
+};
+
+export default function Sidebar({ isCollapsed, isMobile, isMobileOpen, onClose }: SidebarProps) {
   const { t } = useLanguage();
   const { logout, hasPermission } = useAuth();
   const readShopName = () => {
@@ -104,20 +111,37 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
     <aside className={cn(
-      "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 flex flex-col h-screen sticky top-0 border-r border-zinc-200 dark:border-zinc-900 transition-all duration-300 ease-in-out overflow-hidden",
-      isCollapsed ? "w-20" : "w-64"
+      "bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 flex flex-col h-screen border-r border-zinc-200 dark:border-zinc-900 transition-all duration-300 ease-in-out overflow-hidden",
+      isMobile
+        ? cn(
+            "fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] shadow-2xl shadow-zinc-950/20",
+            isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          )
+        : cn("sticky top-0", isCollapsed ? "w-20" : "w-64")
     )}>
       <div className={cn(
-        "p-6 flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-900 h-16 shrink-0",
+        "p-4 sm:p-6 flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-900 h-16 shrink-0",
         isCollapsed && "justify-center px-0"
       )}>
         <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white shrink-0">
           <Printer size={20} strokeWidth={2.5} />
         </div>
         {!isCollapsed && (
-          <h1 className="text-xl font-bold text-zinc-900 dark:white tracking-tight truncate">
-            {shopName}
-          </h1>
+          <>
+            <h1 className="text-xl font-bold text-zinc-900 dark:white tracking-tight truncate flex-1">
+              {shopName}
+            </h1>
+            {isMobile && (
+              <button
+                type="button"
+                aria-label="Close navigation"
+                onClick={onClose}
+                className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-500 dark:text-zinc-400"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </>
         )}
       </div>
       
@@ -126,6 +150,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={isMobile ? onClose : undefined}
             title={isCollapsed ? item.label : undefined}
             className={({ isActive }) => cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
@@ -147,6 +172,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
       <div className="p-4 border-t border-zinc-200 dark:border-zinc-900 space-y-1 shrink-0">
         <NavLink
           to="/settings"
+          onClick={isMobile ? onClose : undefined}
           title={isCollapsed ? t('settingsTitle') : undefined}
           className={({ isActive }) => cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
@@ -161,7 +187,10 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
         </NavLink>
         
         <button
-          onClick={logout}
+          onClick={() => {
+            onClose();
+            logout();
+          }}
           title={isCollapsed ? t('logout') : undefined}
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all group",

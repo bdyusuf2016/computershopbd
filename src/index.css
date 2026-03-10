@@ -9,10 +9,24 @@
 @variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
   :root {
     color-scheme: light;
   }
   :root.dark {
     color-scheme: dark;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  * {
+    min-width: 0;
   }
 }

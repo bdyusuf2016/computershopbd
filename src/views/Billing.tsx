@@ -182,10 +182,10 @@ export default function Billing() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
       <div className="lg:col-span-2 space-y-6">
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors duration-200">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white dark:bg-zinc-900 p-4 sm:p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors duration-200">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
             <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{t('newInvoice')}</h2>
             <span className="text-sm font-mono text-zinc-500 dark:text-zinc-400">{invoiceNumber}</span>
           </div>
@@ -231,11 +231,11 @@ export default function Billing() {
 
             {/* Items Table */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">{t('items')}</h3>
                 <button 
                   onClick={addItem}
-                  className="flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg transition-colors w-full sm:w-auto"
                 >
                   <Plus size={14} />
                   {t('addItem')}
@@ -320,7 +320,7 @@ export default function Billing() {
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm sticky top-24 transition-colors duration-200">
+        <div className="bg-white dark:bg-zinc-900 p-4 sm:p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm lg:sticky lg:top-24 transition-colors duration-200">
           <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-6">{language === 'bn' ? 'সারসংক্ষেপ' : 'Summary'}</h3>
           
           <div className="space-y-4 mb-8">
@@ -359,7 +359,7 @@ export default function Billing() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button 
               onClick={handlePrint}
               className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors"
