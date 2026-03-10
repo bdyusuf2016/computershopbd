@@ -94,6 +94,7 @@ export default function Settings() {
     e.preventDefault();
     setIsSaving(true);
     localStorage.setItem(SHOP_INFO_STORAGE_KEY, JSON.stringify(shopInfo));
+    window.dispatchEvent(new CustomEvent('shop-info-updated', { detail: shopInfo }));
     localStorage.setItem(INVOICE_TEMPLATE_STORAGE_KEY, JSON.stringify(invoiceTemplate));
     localStorage.setItem(PAYMENT_METHODS_STORAGE_KEY, JSON.stringify(paymentMethods));
     if (!isSupabaseConfigured) {

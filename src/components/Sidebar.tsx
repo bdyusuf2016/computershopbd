@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -21,6 +21,8 @@ import { twMerge } from 'tailwind-merge';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { LogOut } from 'lucide-react';
+import { DEFAULT_SHOP_INFO, SHOP_INFO_STORAGE_KEY } from '../constants';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -29,6 +31,57 @@ function cn(...inputs: ClassValue[]) {
 export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const { t } = useLanguage();
   const { logout, hasPermission } = useAuth();
+  const [shopName, setShopName] = useState(() => {
+    const saved = localStorage.getItem(SHOP_INFO_STORAGE_KEY);
+    if (!saved) return DEFAULT_SHOP_INFO.name;
+    try {
+      const parsed = JSON.parse(saved) as { name?: string };
+      return parsed.name?.trim() || DEFAULT_SHOP_INFO.name;
+    } catch {
+      return DEFAULT_SHOP_INFO.name;
+    }
+  });
+
+  useEffect(() => {
+    const onShopInfoUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ name?: string }>;
+      const updatedName = customEvent.detail?.name?.trim();
+      if (updatedName) {
+        setShopName(updatedName);
+      }
+    };
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== SHOP_INFO_STORAGE_KEY || !event.newValue) return;
+      try {
+        const parsed = JSON.parse(event.newValue) as { name?: string };
+        const updatedName = parsed.name?.trim();
+        if (updatedName) {
+          setShopName(updatedName);
+        }
+      } catch {
+        // ignore malformed data
+      }
+    };
+
+    window.addEventListener('shop-info-updated', onShopInfoUpdated as EventListener);
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('shop-info-updated', onShopInfoUpdated as EventListener);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const loadShopInfo = async () => {
+      const { data, error } = await supabase.from('shop_settings').select('name').eq('id', 'default').maybeSingle();
+      if (error || !data?.name) return;
+      setShopName(data.name);
+    };
+    loadShopInfo();
+  }, []);
 
   const navItems = [
     { icon: LayoutDashboard, label: t('dashboard'), path: '/', permission: '*' },
@@ -63,8 +116,7 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
         </div>
         {!isCollapsed && (
           <h1 className="text-xl font-bold text-zinc-900 dark:white tracking-tight truncate">
-            {t('logo').slice(0, -3)}
-            <span className="text-emerald-500">{t('logo').slice(-3)}</span>
+            {shopName}
           </h1>
         )}
       </div>
