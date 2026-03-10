@@ -125,3 +125,42 @@ CREATE POLICY role_permissions_delete_policy ON role_permissions
   FOR DELETE
   TO anon, authenticated
   USING (true);
+
+-- Per-user permission overrides (stores only user-specific exceptions)
+CREATE TABLE user_permission_overrides (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id TEXT NOT NULL,
+  module_id TEXT NOT NULL,
+  module_name TEXT NOT NULL,
+  can_read BOOLEAN NOT NULL DEFAULT false,
+  can_write BOOLEAN NOT NULL DEFAULT false,
+  can_update BOOLEAN NOT NULL DEFAULT false,
+  can_delete BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX user_permission_overrides_unique_user_module
+  ON user_permission_overrides (user_id, module_id);
+
+ALTER TABLE user_permission_overrides ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY user_permission_overrides_select_policy ON user_permission_overrides
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY user_permission_overrides_insert_policy ON user_permission_overrides
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY user_permission_overrides_update_policy ON user_permission_overrides
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY user_permission_overrides_delete_policy ON user_permission_overrides
+  FOR DELETE
+  TO anon, authenticated
+  USING (true);

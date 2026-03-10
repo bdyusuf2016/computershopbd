@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   UserPlus, 
   Search, 
-  MoreVertical, 
   Edit2, 
   Trash2, 
   Shield, 
@@ -61,6 +61,7 @@ const MOCK_USERS: SystemUser[] = [
 
 export default function Users() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<SystemUser[]>(MOCK_USERS);
   const [showModal, setShowModal] = useState(false);
@@ -127,6 +128,16 @@ export default function Users() {
     if (window.confirm(t('confirmDelete'))) {
       setUsers(prev => prev.filter(u => u.id !== id));
     }
+  };
+
+  const handleSetPermission = (user: SystemUser) => {
+    const params = new URLSearchParams({
+      userId: user.id,
+      role: user.role,
+      userType: user.userType,
+      user: user.fullName,
+    });
+    navigate(`/permissions?${params.toString()}`);
   };
 
   return (
@@ -220,12 +231,21 @@ export default function Users() {
                       <button 
                         onClick={() => handleEdit(user)}
                         className="p-2 text-zinc-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
+                        title={t('edit')}
                       >
                         <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleSetPermission(user)}
+                        className="p-2 text-zinc-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all"
+                        title={t('managePermissions')}
+                      >
+                        <Shield size={18} />
                       </button>
                       <button 
                         onClick={() => handleDelete(user.id)}
                         className="p-2 text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all"
+                        title={t('delete')}
                       >
                         <Trash2 size={18} />
                       </button>
