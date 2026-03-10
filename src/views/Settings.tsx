@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Save, Store, User, Shield, Database, Globe, Moon, Sun, Settings as SettingsIcon } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import {
   DEFAULT_INVOICE_TEMPLATE,
   DEFAULT_PAYMENT_METHODS,
@@ -49,6 +49,7 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
     const loadShopInfo = async () => {
       const { data, error } = await supabase.from('shop_settings').select('*').eq('id', 'default').maybeSingle();
       if (error || !data) return;
@@ -73,17 +74,29 @@ export default function Settings() {
     localStorage.setItem(SHOP_INFO_STORAGE_KEY, JSON.stringify(shopInfo));
     localStorage.setItem(INVOICE_TEMPLATE_STORAGE_KEY, JSON.stringify(invoiceTemplate));
     localStorage.setItem(PAYMENT_METHODS_STORAGE_KEY, JSON.stringify(paymentMethods));
-    const { error } = await supabase.from('shop_settings').upsert(
-      {
-        id: 'default',
-        name: shopInfo.name,
-        owner: shopInfo.owner,
-        address: shopInfo.address,
-        mobile: shopInfo.mobile,
-        email: shopInfo.email,
-      },
-      { onConflict: 'id' },
-    );
+    if (!isSupabaseConfigured) {
+      alert(
+        language === 'bn'
+          ? 'Local এ সেভ হয়েছে, কিন্তু Supabase configure করা নেই।'
+          : 'Saved locally, but Supabase is not configured.',
+      );
+      setIsSaving(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('shop_settings')
+      .upsert(
+        {
+          id: 'default',
+          name: shopInfo.name,
+          owner: shopInfo.owner,
+          address: shopInfo.address,
+          mobile: shopInfo.mobile,
+          email: shopInfo.email,
+        },
+        { onConflict: 'id' },
+      );
 
     if (error) {
       console.error('Failed to save shop information:', error);
@@ -94,6 +107,11 @@ export default function Settings() {
           ? `ডাটাবেজে Shop Information সেভ করা যায়নি: ${msg}`
           : `Failed to save shop information to database: ${msg}`,
       );
+      if (msg.toLowerCase().includes('failed to fetch')) {
+        console.error(
+          'Likely causes: wrong VITE_SUPABASE_URL, missing GitHub Pages secrets, CORS/network block, or ad-blocker/privacy extension.',
+        );
+      }
       setIsSaving(false);
       return;
     }

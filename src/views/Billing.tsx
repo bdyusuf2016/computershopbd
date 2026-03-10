@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Printer, Save, Search, User, FileText, ChevronRight } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Customer, InvoiceItem, ServiceType } from '../types';
 import {
   DEFAULT_INVOICE_TEMPLATE,
@@ -65,6 +65,7 @@ export default function Billing() {
   }, [searchQuery]);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
     const loadShopInfo = async () => {
       const { data, error } = await supabase.from('shop_settings').select('*').eq('id', 'default').maybeSingle();
       if (error || !data) return;
