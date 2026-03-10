@@ -103,7 +103,7 @@ export default function Finance() {
       </div>
 
       <div id="transactions-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
-        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} printTargetId="transactions-table-data" />
         {showFilters && (
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
             <div className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
@@ -131,7 +131,7 @@ export default function Finance() {
             </div>
           </div>
         )}
-        <div className="overflow-x-auto">
+        <div id="transactions-table-data" className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-800/50">

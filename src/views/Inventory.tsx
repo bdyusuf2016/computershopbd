@@ -259,7 +259,7 @@ export default function Inventory() {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
-        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} printTargetId="inventory-table-data" />
         {showFilters && (
           <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="relative">
@@ -286,7 +286,7 @@ export default function Inventory() {
             </select>
           </div>
         )}
-        <div className="overflow-x-auto">
+        <div id="inventory-table-data" className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-800/50 border-bottom border-zinc-200 dark:border-zinc-800">

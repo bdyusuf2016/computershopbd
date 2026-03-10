@@ -409,7 +409,7 @@ export default function JobApplications() {
         </form>
 
         <div className="overflow-x-auto">
-          <TableActionBar onFilter={() => setShowOfficeFilters((prev) => !prev)} filterActive={showOfficeFilters} />
+          <TableActionBar onFilter={() => setShowOfficeFilters((prev) => !prev)} filterActive={showOfficeFilters} printTargetId="office-codes-table-data" />
           {showOfficeFilters && (
             <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
               <div className="relative max-w-sm">
@@ -423,7 +423,7 @@ export default function JobApplications() {
               </div>
             </div>
           )}
-          <table className="w-full">
+          <table id="office-codes-table-data" className="w-full">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
                 <th className="px-5 py-3 text-left text-xs uppercase text-zinc-500">Code</th>
@@ -569,8 +569,8 @@ export default function JobApplications() {
       </div>
 
       <div id="applications-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
-        <div className="overflow-x-auto">
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} printTargetId="applications-table-data" />
+        <div id="applications-table-data" className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
