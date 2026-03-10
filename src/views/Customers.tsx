@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { Customer } from '../types';
 import { format } from 'date-fns';
 import { useLanguage } from '../context/LanguageContext';
+import TableActionBar from '../components/TableActionBar';
 
 export default function Customers() {
   const { t } = useLanguage();
@@ -12,6 +13,7 @@ export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({
@@ -127,20 +129,23 @@ export default function Customers() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors duration-200">
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
-          <input 
-            type="text" 
-            placeholder={t('searchPlaceholder')} 
-            className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </form>
-      </div>
+      {showFilters && (
+        <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors duration-200">
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
+            <input 
+              type="text" 
+              placeholder={t('searchPlaceholder')} 
+              className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-zinc-900 dark:text-zinc-100"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </form>
+        </div>
+      )}
 
       <div id="customers-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

@@ -5,6 +5,7 @@ import { InventoryItem } from '../types';
 import { INVENTORY_CATEGORIES } from '../constants';
 import { format } from 'date-fns';
 import { useLanguage } from '../context/LanguageContext';
+import TableActionBar from '../components/TableActionBar';
 
 const MOCK_INVENTORY: InventoryItem[] = [
   { 
@@ -77,6 +78,9 @@ export default function Inventory() {
   const [selectedCategoryForDetails, setSelectedCategoryForDetails] = useState<string | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const selectedCategory = INVENTORY_CATEGORIES.find(c => c.value === formData.category);
   const availableProperties = selectedCategory?.properties?.split(',').map(p => p.trim()).filter(p => p) || [];
@@ -176,6 +180,14 @@ export default function Inventory() {
     return { ...cat, totalQty, totalValue };
   });
 
+  const filteredItems = items.filter((item) => {
+    const matchSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCategory = categoryFilter === 'all' || item.category === categoryFilter;
+    return matchSearch && matchCategory;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -247,6 +259,33 @@ export default function Inventory() {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
+        {showFilters && (
+          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('searchPlaceholder')}
+                className="w-full pl-9 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+              />
+            </div>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+            >
+              <option value="all">All Categories</option>
+              {INVENTORY_CATEGORIES.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -265,12 +304,12 @@ export default function Inventory() {
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">{t('loading')}</td>
                 </tr>
-              ) : items.length === 0 ? (
+              ) : filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">{t('noTransactions')}</td>
                 </tr>
               ) : (
-                items.map((item) => (
+                filteredItems.map((item) => (
                   <React.Fragment key={item.id}>
                     <tr 
                       onClick={() => setExpandedRowId(expandedRowId === item.id ? null : item.id)}

@@ -17,6 +17,7 @@ import { JobApplication } from '../types';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { DEFAULT_PAYMENT_METHODS, PAYMENT_METHODS_STORAGE_KEY } from '../constants';
+import TableActionBar from '../components/TableActionBar';
 
 type OfficeCodeItem = {
   id: string;
@@ -37,6 +38,8 @@ export default function JobApplications() {
   const [officeCodesLoading, setOfficeCodesLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [showOfficeFilters, setShowOfficeFilters] = useState(false);
+  const [officeSearch, setOfficeSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'paid'>('all');
   const [rangeFrom, setRangeFrom] = useState('');
   const [rangeTo, setRangeTo] = useState('');
@@ -343,6 +346,11 @@ export default function JobApplications() {
   };
 
   const officeOptions = [...officeCodes];
+  const filteredOfficeCodes = officeCodes.filter(
+    (office) =>
+      office.code.toLowerCase().includes(officeSearch.toLowerCase()) ||
+      office.name.toLowerCase().includes(officeSearch.toLowerCase()),
+  );
   if (formData.office_code && !officeOptions.some((o) => o.code === formData.office_code)) {
     officeOptions.unshift({ id: 'missing', code: formData.office_code, name: 'Unknown office', url: '' });
   }
@@ -401,6 +409,20 @@ export default function JobApplications() {
         </form>
 
         <div className="overflow-x-auto">
+          <TableActionBar onFilter={() => setShowOfficeFilters((prev) => !prev)} filterActive={showOfficeFilters} />
+          {showOfficeFilters && (
+            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                <input
+                  value={officeSearch}
+                  onChange={(e) => setOfficeSearch(e.target.value)}
+                  placeholder="Filter office code/name"
+                  className="w-full pl-9 pr-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm"
+                />
+              </div>
+            </div>
+          )}
           <table className="w-full">
             <thead>
               <tr className="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
@@ -417,7 +439,7 @@ export default function JobApplications() {
                     Loading office codes...
                   </td>
                 </tr>
-              ) : officeCodes.map((office) => (
+              ) : filteredOfficeCodes.map((office) => (
                 <tr key={office.id}>
                   <td className="px-5 py-3 font-semibold">{office.code}</td>
                   <td className="px-5 py-3">{office.name}</td>
@@ -547,6 +569,7 @@ export default function JobApplications() {
       </div>
 
       <div id="applications-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

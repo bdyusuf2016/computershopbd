@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { User } from '../context/AuthContext';
+import TableActionBar from '../components/TableActionBar';
 
 interface SystemUser extends User {
   status: 'active' | 'inactive';
@@ -63,6 +64,7 @@ export default function Users() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(true);
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
@@ -157,18 +159,21 @@ export default function Users() {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-zinc-100 dark:border-zinc-800">
-          <div className="relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-            <input
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              className="w-full pl-11 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100 transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
+        {showFilters && (
+          <div className="p-6 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="relative max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+              <input
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                className="w-full pl-11 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

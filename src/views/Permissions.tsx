@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Shield, Check, X, Save, Lock } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
+import TableActionBar from '../components/TableActionBar';
 
 interface PermissionModule {
   id: string;
@@ -107,6 +108,8 @@ export default function Permissions() {
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
   const [isLoadingOverrides, setIsLoadingOverrides] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [moduleSearch, setModuleSearch] = useState('');
 
   const currentRolePermissions = useMemo(
     () =>
@@ -119,6 +122,9 @@ export default function Permissions() {
   const isProfileMode = !selectedUserId;
   const isLoading = isLoadingProfiles || isLoadingOverrides;
   const toggleLocked = isSaving || (isProfileMode && selectedRole === 'admin');
+  const filteredModules = editedModules.filter((module) =>
+    module.name.toLowerCase().includes(moduleSearch.toLowerCase()),
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -457,6 +463,18 @@ export default function Permissions() {
       )}
 
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
+        {showFilters && (
+          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+            <input
+              type="text"
+              value={moduleSearch}
+              onChange={(e) => setModuleSearch(e.target.value)}
+              placeholder="Filter by module name"
+              className="w-full max-w-sm px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg"
+            />
+          </div>
+        )}
         <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-xl ${selectedRole === 'admin' ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-600' : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600'}`}>
@@ -503,7 +521,7 @@ export default function Permissions() {
                 </tr>
               )}
               {!isLoading &&
-                editedModules.map((module) => (
+                filteredModules.map((module) => (
                   <tr key={module.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">

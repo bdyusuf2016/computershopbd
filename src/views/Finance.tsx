@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Plus, Search, Filter, TrendingUp, TrendingDown, DollarSign, Trash2 } from 'lucide-react';
+import { Plus, Search, TrendingUp, TrendingDown, DollarSign, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Transaction } from '../types';
 import { format } from 'date-fns';
 import { useLanguage } from '../context/LanguageContext';
+import TableActionBar from '../components/TableActionBar';
 
 export default function Finance() {
   const { t } = useLanguage();
   const location = useLocation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(true);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     amount: 0,
@@ -63,6 +66,8 @@ export default function Finance() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
+  const filteredTransactions =
+    typeFilter === 'all' ? transactions : transactions.filter((tx) => tx.type === typeFilter);
 
   return (
     <div className="space-y-6">
@@ -98,13 +103,34 @@ export default function Finance() {
       </div>
 
       <div id="transactions-table" className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden transition-colors duration-200">
-        <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-          <h3 className="font-bold text-zinc-900 dark:text-zinc-100">{t('recentTransactions')}</h3>
-          <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-            <Filter size={16} />
-            <span>{t('filter')}</span>
+        <TableActionBar onFilter={() => setShowFilters((prev) => !prev)} filterActive={showFilters} />
+        {showFilters && (
+          <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setTypeFilter('all')}
+                className={`px-3 py-2 text-sm font-semibold ${typeFilter === 'all' ? 'bg-emerald-500 text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'}`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter('income')}
+                className={`px-3 py-2 text-sm font-semibold ${typeFilter === 'income' ? 'bg-emerald-500 text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'}`}
+              >
+                {t('income')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter('expense')}
+                className={`px-3 py-2 text-sm font-semibold ${typeFilter === 'expense' ? 'bg-emerald-500 text-white' : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'}`}
+              >
+                {t('expense')}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -120,12 +146,12 @@ export default function Finance() {
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">{t('loading')}</td>
                 </tr>
-              ) : transactions.length === 0 ? (
+              ) : filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">{t('noTransactions')}</td>
                 </tr>
               ) : (
-                transactions.map((t) => (
+                filteredTransactions.map((t) => (
                   <tr key={t.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
                       {format(new Date(t.created_at), 'MMM dd, yyyy')}
