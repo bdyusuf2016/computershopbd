@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Plus, Search, ExternalLink, Clock, CheckCircle2, AlertCircle, MoreVertical } from 'lucide-react';
+import { Globe, Search, ExternalLink, Clock, CheckCircle2, AlertCircle, MoreVertical } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { OnlineService, Customer } from '../types';
 import { ONLINE_SERVICE_STATUSES } from '../constants';
@@ -11,7 +11,6 @@ export default function OnlineServices() {
   const [services, setServices] = useState<OnlineService[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     customer_id: '',
@@ -46,7 +45,6 @@ export default function OnlineServices() {
     e.preventDefault();
     const { error } = await supabase.from('online_services').insert([formData]);
     if (!error) {
-      setShowModal(false);
       fetchServices();
       setFormData({ customer_id: '', service_name: '', application_id: '', status: 'pending', customer_link: '', notes: '' });
     }
@@ -72,13 +70,63 @@ export default function OnlineServices() {
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{t('onlineServicesTitle')}</h1>
           <p className="text-zinc-500 dark:text-zinc-400">{t('onlineServicesDesc')}</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-medium transition-colors shadow-sm"
-        >
-          <Plus size={20} />
-          {t('newApplication')}
-        </button>
+      </div>
+
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-3 transition-colors duration-200">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-2 items-center">
+          <select
+            required
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+            value={formData.customer_id}
+            onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+          >
+            <option value="">{t('selectCustomer')}</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.mobile})
+              </option>
+            ))}
+          </select>
+          <input
+            required
+            type="text"
+            placeholder={t('serviceName')}
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+            value={formData.service_name}
+            onChange={(e) => setFormData({ ...formData, service_name: e.target.value })}
+          />
+          <input
+            type="text"
+            placeholder={t('appId')}
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+            value={formData.application_id}
+            onChange={(e) => setFormData({ ...formData, application_id: e.target.value })}
+          />
+          <input
+            type="url"
+            placeholder={t('customerLink')}
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm xl:col-span-2"
+            value={formData.customer_link}
+            onChange={(e) => setFormData({ ...formData, customer_link: e.target.value })}
+          />
+          <div className="flex gap-2 xl:justify-end">
+            <button
+              type="button"
+              onClick={() =>
+                setFormData({ customer_id: '', service_name: '', application_id: '', status: 'pending', customer_link: '', notes: '' })
+              }
+              className="px-3 py-2.5 text-sm font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded-xl"
+            >
+              {t('reset')}
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl transition-colors"
+            >
+              {t('save')}
+            </button>
+          </div>
+        </form>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -151,73 +199,6 @@ export default function OnlineServices() {
         )}
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border border-zinc-200 dark:border-zinc-800">
-            <div className="p-6 border-b border-zinc-100 dark:border-zinc-800">
-              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{t('newApplication')}</h3>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('customer')} *</label>
-                <select 
-                  required
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.customer_id}
-                  onChange={(e) => setFormData({...formData, customer_id: e.target.value})}
-                >
-                  <option value="">{t('selectCustomer')}</option>
-                  {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.mobile})</option>)}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('serviceName')} *</label>
-                <input 
-                  required
-                  type="text" 
-                  placeholder={t('serviceName')}
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.service_name}
-                  onChange={(e) => setFormData({...formData, service_name: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('appId')}</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.application_id}
-                  onChange={(e) => setFormData({...formData, application_id: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('customerLink')}</label>
-                <input 
-                  type="url" 
-                  className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
-                  value={formData.customer_link}
-                  onChange={(e) => setFormData({...formData, customer_link: e.target.value})}
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2.5 text-sm font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors"
-                >
-                  {t('cancel')}
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl transition-colors shadow-sm"
-                >
-                  {t('save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
