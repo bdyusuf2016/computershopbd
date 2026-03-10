@@ -22,7 +22,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { LogOut } from 'lucide-react';
 import { DEFAULT_SHOP_INFO, SHOP_INFO_STORAGE_KEY } from '../constants';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -71,16 +70,6 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
       window.removeEventListener('shop-info-updated', onShopInfoUpdated as EventListener);
       window.removeEventListener('storage', onStorage);
     };
-  }, []);
-
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-    const loadShopInfo = async () => {
-      const { data, error } = await supabase.from('shop_settings').select('name').eq('id', 'default').maybeSingle();
-      if (error || !data?.name) return;
-      setShopName(data.name);
-    };
-    loadShopInfo();
   }, []);
 
   const navItems = [

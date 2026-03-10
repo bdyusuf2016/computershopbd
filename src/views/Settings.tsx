@@ -85,6 +85,7 @@ export default function Settings() {
       };
       setShopInfo(next);
       localStorage.setItem(SHOP_INFO_STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new CustomEvent('shop-info-updated', { detail: next }));
     };
 
     loadShopInfo();
