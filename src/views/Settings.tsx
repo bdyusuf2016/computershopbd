@@ -87,10 +87,11 @@ export default function Settings() {
 
     if (error) {
       console.error('Failed to save shop information:', error);
-      const msg = error.message || 'Unknown database error';
+      const msgParts = [error.message, error.details, error.hint, error.code].filter(Boolean);
+      const msg = msgParts.length > 0 ? msgParts.join(' | ') : JSON.stringify(error);
       alert(
         language === 'bn'
-          ? `???????? Shop Information ??? ??? ?????: ${msg}`
+          ? `ডাটাবেজে Shop Information সেভ করা যায়নি: ${msg}`
           : `Failed to save shop information to database: ${msg}`,
       );
       setIsSaving(false);
