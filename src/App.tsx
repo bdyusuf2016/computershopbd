@@ -18,6 +18,7 @@ import Login from './views/Login';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function AppRoutes() {
   const { user, isLoading } = useAuth();
@@ -63,14 +64,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <HashRouter>
-            <AppRoutes />
-          </HashRouter>
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <HashRouter>
+              <AppRoutes />
+            </HashRouter>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

@@ -17,6 +17,7 @@ interface SystemUser extends User {
   status: 'active' | 'inactive';
   lastLogin: string;
   email: string;
+  userType: 'owner' | 'manager' | 'operator';
 }
 
 const MOCK_USERS: SystemUser[] = [
@@ -25,6 +26,7 @@ const MOCK_USERS: SystemUser[] = [
     username: 'admin', 
     fullName: 'Admin User', 
     role: 'admin', 
+    userType: 'owner',
     email: 'admin@compservpro.com',
     status: 'active',
     lastLogin: '2024-03-08 10:30 AM',
@@ -36,6 +38,7 @@ const MOCK_USERS: SystemUser[] = [
     username: 'staff1', 
     fullName: 'Rahim Ahmed', 
     role: 'staff', 
+    userType: 'manager',
     email: 'rahim@compservpro.com',
     status: 'active',
     lastLogin: '2024-03-07 04:15 PM',
@@ -47,6 +50,7 @@ const MOCK_USERS: SystemUser[] = [
     username: 'staff2', 
     fullName: 'Karim Ullah', 
     role: 'staff', 
+    userType: 'operator',
     email: 'karim@compservpro.com',
     status: 'inactive',
     lastLogin: '2024-02-28 09:00 AM',
@@ -66,6 +70,7 @@ export default function Users() {
     username: '',
     email: '',
     role: 'staff' as 'admin' | 'staff',
+    userType: 'operator' as 'owner' | 'manager' | 'operator',
     status: 'active' as 'active' | 'inactive'
   });
 
@@ -82,6 +87,7 @@ export default function Users() {
       username: user.username,
       email: user.email,
       role: user.role,
+      userType: user.userType,
       status: user.status
     });
     setShowModal(true);
@@ -94,6 +100,7 @@ export default function Users() {
       username: '',
       email: '',
       role: 'staff',
+      userType: 'operator',
       status: 'active'
     });
     setShowModal(true);
@@ -158,6 +165,7 @@ export default function Users() {
               <tr className="bg-zinc-50/50 dark:bg-zinc-800/50">
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{t('userManagement')}</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{t('role')}</th>
+                <th className="px-6 py-4 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{t('userType')}</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{t('userStatus')}</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">{t('lastLogin')}</th>
                 <th className="px-6 py-4 text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">{t('action')}</th>
@@ -185,6 +193,13 @@ export default function Users() {
                     }`}>
                       {user.role === 'admin' ? <Shield size={12} /> : <UserIcon size={12} />}
                       {user.role === 'admin' ? t('admin') : t('staff')}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                      {user.userType === 'owner' && t('owner')}
+                      {user.userType === 'manager' && t('manager')}
+                      {user.userType === 'operator' && t('operator')}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -262,7 +277,7 @@ export default function Users() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('role')}</label>
                   <select 
@@ -272,6 +287,18 @@ export default function Users() {
                   >
                     <option value="admin">{t('admin')}</option>
                     <option value="staff">{t('staff')}</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('userType')}</label>
+                  <select
+                    className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                    value={formData.userType}
+                    onChange={(e) => setFormData({...formData, userType: e.target.value as 'owner' | 'manager' | 'operator'})}
+                  >
+                    <option value="owner">{t('owner')}</option>
+                    <option value="manager">{t('manager')}</option>
+                    <option value="operator">{t('operator')}</option>
                   </select>
                 </div>
                 <div className="space-y-1">
