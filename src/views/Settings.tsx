@@ -86,7 +86,13 @@ export default function Settings() {
     );
 
     if (error) {
-      alert(language === 'bn' ? 'ডাটাবেজে Shop Information সেভ করা যায়নি।' : 'Failed to save shop information to database.');
+      console.error('Failed to save shop information:', error);
+      const msg = error.message || 'Unknown database error';
+      alert(
+        language === 'bn'
+          ? `???????? Shop Information ??? ??? ?????: ${msg}`
+          : `Failed to save shop information to database: ${msg}`,
+      );
       setIsSaving(false);
       return;
     }
