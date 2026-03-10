@@ -43,3 +43,20 @@ export const ONLINE_SERVICE_STATUSES = [
 export const PAYMENT_METHODS_STORAGE_KEY = 'payment_methods_v1';
 export const DEFAULT_PAYMENT_METHODS = ['Cash', 'Bkash', 'Nagad'];
 
+export const SHOP_INFO_STORAGE_KEY = 'shop_info_v1';
+export const INVOICE_TEMPLATE_STORAGE_KEY = 'invoice_template_v1';
+
+export const DEFAULT_SHOP_INFO = {
+  name: 'CompServPro Digital Shop',
+  owner: 'Admin User',
+  address: '123 Main Street, Dhaka, Bangladesh',
+  mobile: '01700000000',
+  email: 'contact@compservpro.com',
+};
+
+export const DEFAULT_INVOICE_TEMPLATE = {
+  heading: 'Invoice',
+  footerLine1: 'Thank you for doing business with us!',
+  footerLine2: 'This is a computer generated invoice.',
+};
+

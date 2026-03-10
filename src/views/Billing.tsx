@@ -2,13 +2,39 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Printer, Save, Search, User, FileText, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Customer, InvoiceItem, ServiceType } from '../types';
-import { SERVICE_LABELS, SERVICE_PRICES, PAPER_SIZES } from '../constants';
+import {
+  DEFAULT_INVOICE_TEMPLATE,
+  DEFAULT_SHOP_INFO,
+  INVOICE_TEMPLATE_STORAGE_KEY,
+  PAPER_SIZES,
+  SERVICE_LABELS,
+  SERVICE_PRICES,
+  SHOP_INFO_STORAGE_KEY,
+} from '../constants';
 import { useReactToPrint } from 'react-to-print';
 import { format } from 'date-fns';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function Billing() {
   const { t, language } = useLanguage();
+  const [shopInfo] = useState(() => {
+    const saved = localStorage.getItem(SHOP_INFO_STORAGE_KEY);
+    if (!saved) return DEFAULT_SHOP_INFO;
+    try {
+      return { ...DEFAULT_SHOP_INFO, ...(JSON.parse(saved) as Partial<typeof DEFAULT_SHOP_INFO>) };
+    } catch {
+      return DEFAULT_SHOP_INFO;
+    }
+  });
+  const [invoiceTemplate] = useState(() => {
+    const saved = localStorage.getItem(INVOICE_TEMPLATE_STORAGE_KEY);
+    if (!saved) return DEFAULT_INVOICE_TEMPLATE;
+    try {
+      return { ...DEFAULT_INVOICE_TEMPLATE, ...(JSON.parse(saved) as Partial<typeof DEFAULT_INVOICE_TEMPLATE>) };
+    } catch {
+      return DEFAULT_INVOICE_TEMPLATE;
+    }
+  });
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,7 +52,7 @@ export default function Billing() {
       @page {
         margin-top: 0.5in;
         margin-right: 0.5in;
-        margin-bottom: 0.5in;
+        margin-bottom: 0.75in;
         margin-left: 0.5in;
       }
     `,
@@ -338,13 +364,14 @@ export default function Billing() {
         <div ref={printRef} className="relative min-h-[1056px] p-12 pb-32 text-zinc-900 font-sans">
           <div className="flex justify-between items-start mb-12">
             <div>
-              <h1 className="text-3xl font-bold text-emerald-600 mb-2">কম্পসার্ভ প্রো</h1>
-              <p className="text-sm text-zinc-500">কম্পিউটার সার্ভিস ও অনলাইন সেন্টার</p>
-              <p className="text-sm text-zinc-500">মেইন রোড, সিটি সেন্টার, ১২৩৪৫৬</p>
-              <p className="text-sm text-zinc-500">ফোন: +৯১ ৯৮৭৬৫ ৪৩২১০</p>
+              <h1 className="text-3xl font-bold text-emerald-600 mb-2">{shopInfo.name}</h1>
+              <p className="text-sm text-zinc-500">{shopInfo.address}</p>
+              <p className="text-sm text-zinc-500">Owner: {shopInfo.owner}</p>
+              <p className="text-sm text-zinc-500">Phone: {shopInfo.mobile}</p>
+              <p className="text-sm text-zinc-500">Email: {shopInfo.email}</p>
             </div>
             <div className="text-right">
-              <h2 className="text-2xl font-bold uppercase tracking-widest text-zinc-400 mb-4">{t('billing')}</h2>
+              <h2 className="text-2xl font-bold uppercase tracking-widest text-zinc-400 mb-4">{invoiceTemplate.heading}</h2>
               <p className="text-sm font-bold">{t('invoiceNo')}: {invoiceNumber}</p>
               <p className="text-sm">{t('date')}: {format(new Date(), 'MMM dd, yyyy')}</p>
             </div>
@@ -399,11 +426,13 @@ export default function Billing() {
           </div>
 
           <div className="absolute left-12 right-12 bottom-10 border-t border-zinc-100 pt-6 text-center text-zinc-400 text-xs">
-            <p>{language === 'bn' ? 'আমাদের সাথে ব্যবসা করার জন্য ধন্যবাদ!' : 'Thank you for doing business with us!'}</p>
-            <p>{language === 'bn' ? 'এটি একটি কম্পিউটার জেনারেটেড ইনভয়েস।' : 'This is a computer generated invoice.'}</p>
+            <p>{invoiceTemplate.footerLine1}</p>
+            <p>{invoiceTemplate.footerLine2}</p>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+

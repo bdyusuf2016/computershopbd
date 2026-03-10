@@ -2,18 +2,36 @@ import React, { useState } from 'react';
 import { Save, Store, User, Shield, Database, Globe, Moon, Sun, Settings as SettingsIcon } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { DEFAULT_PAYMENT_METHODS, PAYMENT_METHODS_STORAGE_KEY } from '../constants';
+import {
+  DEFAULT_INVOICE_TEMPLATE,
+  DEFAULT_PAYMENT_METHODS,
+  DEFAULT_SHOP_INFO,
+  INVOICE_TEMPLATE_STORAGE_KEY,
+  PAYMENT_METHODS_STORAGE_KEY,
+  SHOP_INFO_STORAGE_KEY,
+} from '../constants';
 
 export default function Settings() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme, fontSize, setFontSize } = useTheme();
   
-  const [shopInfo, setShopInfo] = useState({
-    name: 'CompServPro Digital Shop',
-    owner: 'Admin User',
-    address: '123 Main Street, Dhaka, Bangladesh',
-    mobile: '01700000000',
-    email: 'contact@compservpro.com'
+  const [shopInfo, setShopInfo] = useState(() => {
+    const saved = localStorage.getItem(SHOP_INFO_STORAGE_KEY);
+    if (!saved) return DEFAULT_SHOP_INFO;
+    try {
+      return { ...DEFAULT_SHOP_INFO, ...(JSON.parse(saved) as Partial<typeof DEFAULT_SHOP_INFO>) };
+    } catch {
+      return DEFAULT_SHOP_INFO;
+    }
+  });
+  const [invoiceTemplate, setInvoiceTemplate] = useState(() => {
+    const saved = localStorage.getItem(INVOICE_TEMPLATE_STORAGE_KEY);
+    if (!saved) return DEFAULT_INVOICE_TEMPLATE;
+    try {
+      return { ...DEFAULT_INVOICE_TEMPLATE, ...(JSON.parse(saved) as Partial<typeof DEFAULT_INVOICE_TEMPLATE>) };
+    } catch {
+      return DEFAULT_INVOICE_TEMPLATE;
+    }
   });
   const [newPaymentMethod, setNewPaymentMethod] = useState('');
   const [paymentMethods, setPaymentMethods] = useState<string[]>(() => {
@@ -30,6 +48,8 @@ export default function Settings() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    localStorage.setItem(SHOP_INFO_STORAGE_KEY, JSON.stringify(shopInfo));
+    localStorage.setItem(INVOICE_TEMPLATE_STORAGE_KEY, JSON.stringify(invoiceTemplate));
     localStorage.setItem(PAYMENT_METHODS_STORAGE_KEY, JSON.stringify(paymentMethods));
     alert(language === 'bn' ? 'সেটিংস সফলভাবে সংরক্ষিত হয়েছে!' : 'Settings saved successfully!');
   };
@@ -107,6 +127,46 @@ export default function Settings() {
                 className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
                 value={shopInfo.email}
                 onChange={(e) => setShopInfo({...shopInfo, email: e.target.value})}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Template */}
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+          <div className="flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-4">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-lg">
+              <Store size={20} />
+            </div>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Invoice Template</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Invoice Heading</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                value={invoiceTemplate.heading}
+                onChange={(e) => setInvoiceTemplate({ ...invoiceTemplate, heading: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Footer Line 1</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                value={invoiceTemplate.footerLine1}
+                onChange={(e) => setInvoiceTemplate({ ...invoiceTemplate, footerLine1: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Footer Line 2</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-zinc-900 dark:text-zinc-100"
+                value={invoiceTemplate.footerLine2}
+                onChange={(e) => setInvoiceTemplate({ ...invoiceTemplate, footerLine2: e.target.value })}
               />
             </div>
           </div>
