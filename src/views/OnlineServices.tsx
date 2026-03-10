@@ -63,6 +63,18 @@ export default function OnlineServices() {
     }
   };
 
+  const filteredServices = services.filter((service) => {
+    const customerName = service.customers?.name?.toLowerCase() || '';
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      service.service_name.toLowerCase().includes(query) ||
+      (service.application_id || '').toLowerCase().includes(query) ||
+      (service.status || '').toLowerCase().includes(query) ||
+      customerName.includes(query)
+    );
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -73,7 +85,7 @@ export default function OnlineServices() {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-3 transition-colors duration-200">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-2 items-center">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-2 items-center">
           <select
             required
             className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
@@ -105,10 +117,20 @@ export default function OnlineServices() {
           <input
             type="url"
             placeholder={t('customerLink')}
-            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm xl:col-span-2"
+            className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
             value={formData.customer_link}
             onChange={(e) => setFormData({ ...formData, customer_link: e.target.value })}
           />
+          <div className="relative xl:col-span-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search service/app/status/customer"
+              className="w-full pl-9 pr-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <div className="flex gap-2 xl:justify-end">
             <button
               type="button"
@@ -132,10 +154,10 @@ export default function OnlineServices() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           <div className="col-span-full py-12 text-center text-zinc-500 dark:text-zinc-400">{t('loading')}</div>
-        ) : services.length === 0 ? (
+        ) : filteredServices.length === 0 ? (
           <div className="col-span-full py-12 text-center text-zinc-500 dark:text-zinc-400">{t('noTransactions')}</div>
         ) : (
-          services.map((service) => (
+          filteredServices.map((service) => (
             <div key={service.id} className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4 hover:border-emerald-500/30 transition-all group">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
