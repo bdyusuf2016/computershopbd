@@ -30,7 +30,7 @@ function cn(...inputs: ClassValue[]) {
 export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const { t } = useLanguage();
   const { logout, hasPermission } = useAuth();
-  const [shopName, setShopName] = useState(() => {
+  const readShopName = () => {
     const saved = localStorage.getItem(SHOP_INFO_STORAGE_KEY);
     if (!saved) return DEFAULT_SHOP_INFO.name;
     try {
@@ -39,9 +39,15 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
     } catch {
       return DEFAULT_SHOP_INFO.name;
     }
-  });
+  };
+  const [shopName, setShopName] = useState(readShopName);
 
   useEffect(() => {
+    const syncFromStorage = () => {
+      const latest = readShopName();
+      setShopName((prev) => (prev === latest ? prev : latest));
+    };
+
     const onShopInfoUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ name?: string }>;
       const updatedName = customEvent.detail?.name?.trim();
@@ -65,10 +71,15 @@ export default function Sidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
     window.addEventListener('shop-info-updated', onShopInfoUpdated as EventListener);
     window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', syncFromStorage);
+    const intervalId = window.setInterval(syncFromStorage, 1000);
+    syncFromStorage();
 
     return () => {
       window.removeEventListener('shop-info-updated', onShopInfoUpdated as EventListener);
       window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', syncFromStorage);
+      window.clearInterval(intervalId);
     };
   }, []);
 
