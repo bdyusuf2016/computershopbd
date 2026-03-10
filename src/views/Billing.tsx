@@ -17,7 +17,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 export default function Billing() {
   const { t, language } = useLanguage();
-  const [shopInfo] = useState(() => {
+  const [shopInfo, setShopInfo] = useState(() => {
     const saved = localStorage.getItem(SHOP_INFO_STORAGE_KEY);
     if (!saved) return DEFAULT_SHOP_INFO;
     try {
@@ -63,6 +63,25 @@ export default function Billing() {
       searchCustomers();
     }
   }, [searchQuery]);
+
+  useEffect(() => {
+    const loadShopInfo = async () => {
+      const { data, error } = await supabase.from('shop_settings').select('*').eq('id', 'default').maybeSingle();
+      if (error || !data) return;
+
+      const next = {
+        name: data.name || DEFAULT_SHOP_INFO.name,
+        owner: data.owner || DEFAULT_SHOP_INFO.owner,
+        address: data.address || DEFAULT_SHOP_INFO.address,
+        mobile: data.mobile || DEFAULT_SHOP_INFO.mobile,
+        email: data.email || DEFAULT_SHOP_INFO.email,
+      };
+      setShopInfo(next);
+      localStorage.setItem(SHOP_INFO_STORAGE_KEY, JSON.stringify(next));
+    };
+
+    loadShopInfo();
+  }, []);
 
   const searchCustomers = async () => {
     const { data } = await supabase

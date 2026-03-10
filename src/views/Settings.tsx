@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Save, Store, User, Shield, Database, Globe, Moon, Sun, Settings as SettingsIcon } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import { supabase } from '../lib/supabase';
 import {
   DEFAULT_INVOICE_TEMPLATE,
   DEFAULT_PAYMENT_METHODS,
@@ -45,13 +46,52 @@ export default function Settings() {
       return DEFAULT_PAYMENT_METHODS;
     }
   });
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    const loadShopInfo = async () => {
+      const { data, error } = await supabase.from('shop_settings').select('*').eq('id', 'default').maybeSingle();
+      if (error || !data) return;
+
+      const next = {
+        name: data.name || DEFAULT_SHOP_INFO.name,
+        owner: data.owner || DEFAULT_SHOP_INFO.owner,
+        address: data.address || DEFAULT_SHOP_INFO.address,
+        mobile: data.mobile || DEFAULT_SHOP_INFO.mobile,
+        email: data.email || DEFAULT_SHOP_INFO.email,
+      };
+      setShopInfo(next);
+      localStorage.setItem(SHOP_INFO_STORAGE_KEY, JSON.stringify(next));
+    };
+
+    loadShopInfo();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     localStorage.setItem(SHOP_INFO_STORAGE_KEY, JSON.stringify(shopInfo));
     localStorage.setItem(INVOICE_TEMPLATE_STORAGE_KEY, JSON.stringify(invoiceTemplate));
     localStorage.setItem(PAYMENT_METHODS_STORAGE_KEY, JSON.stringify(paymentMethods));
+    const { error } = await supabase.from('shop_settings').upsert(
+      {
+        id: 'default',
+        name: shopInfo.name,
+        owner: shopInfo.owner,
+        address: shopInfo.address,
+        mobile: shopInfo.mobile,
+        email: shopInfo.email,
+      },
+      { onConflict: 'id' },
+    );
+
+    if (error) {
+      alert(language === 'bn' ? 'ডাটাবেজে Shop Information সেভ করা যায়নি।' : 'Failed to save shop information to database.');
+      setIsSaving(false);
+      return;
+    }
     alert(language === 'bn' ? 'সেটিংস সফলভাবে সংরক্ষিত হয়েছে!' : 'Settings saved successfully!');
+    setIsSaving(false);
   };
   const addPaymentMethod = () => {
     const method = newPaymentMethod.trim();
@@ -312,16 +352,18 @@ export default function Settings() {
         <div className="flex justify-end pt-4">
           <button 
             type="submit"
-            className="flex items-center gap-2 px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+            disabled={isSaving}
+            className="flex items-center gap-2 px-8 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white rounded-xl font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
           >
             <Save size={20} />
-            {t('saveSettings')}
+            {isSaving ? `${t('save')}...` : t('saveSettings')}
           </button>
         </div>
       </form>
     </div>
   );
 }
+
 
 
 

@@ -82,6 +82,39 @@ CREATE TABLE transactions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Shop settings table (single-row app configuration)
+CREATE TABLE shop_settings (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  owner TEXT NOT NULL,
+  address TEXT NOT NULL,
+  mobile TEXT NOT NULL,
+  email TEXT NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO shop_settings (id, name, owner, address, mobile, email)
+VALUES ('default', 'CompServPro Digital Shop', 'Admin User', '123 Main Street, Dhaka, Bangladesh', '01700000000', 'contact@compservpro.com')
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE shop_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY shop_settings_select_policy ON shop_settings
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY shop_settings_insert_policy ON shop_settings
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY shop_settings_update_policy ON shop_settings
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
 -- Role permissions table (role + user type based access control)
 CREATE TABLE role_permissions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
