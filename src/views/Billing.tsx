@@ -22,6 +22,14 @@ export default function Billing() {
   const printRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
     contentRef: printRef,
+    pageStyle: `
+      @page {
+        margin-top: 0.5in;
+        margin-right: 0.5in;
+        margin-bottom: 0.75in;
+        margin-left: 0.5in;
+      }
+    `,
   });
 
   useEffect(() => {
