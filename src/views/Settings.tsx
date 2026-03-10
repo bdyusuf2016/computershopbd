@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Save, Store, User, Shield, Database, Globe, Moon, Sun, Settings as SettingsIcon } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Save, Store, User, Shield, Database, Globe, Moon, Sun, Settings as SettingsIcon, Download, Upload, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -11,6 +11,19 @@ import {
   PAYMENT_METHODS_STORAGE_KEY,
   SHOP_INFO_STORAGE_KEY,
 } from '../constants';
+
+const BACKUP_TABLES = [
+  'shop_settings',
+  'customers',
+  'invoices',
+  'invoice_items',
+  'online_services',
+  'office_codes',
+  'inventory',
+  'transactions',
+  'role_permissions',
+  'user_permission_overrides',
+] as const;
 
 export default function Settings() {
   const { t, language, setLanguage } = useLanguage();
@@ -47,6 +60,15 @@ export default function Settings() {
     }
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [connectionState, setConnectionState] = useState<'idle' | 'checking' | 'connected' | 'error'>(
+    isSupabaseConfigured ? 'idle' : 'error',
+  );
+  const [connectionMessage, setConnectionMessage] = useState(
+    isSupabaseConfigured ? 'Ready to test connection.' : 'Supabase credentials are missing.',
+  );
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const restoreFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -118,6 +140,135 @@ export default function Settings() {
     alert(language === 'bn' ? 'সেটিংস সফলভাবে সংরক্ষিত হয়েছে!' : 'Settings saved successfully!');
     setIsSaving(false);
   };
+
+  const testConnection = async () => {
+    if (!isSupabaseConfigured) {
+      setConnectionState('error');
+      setConnectionMessage('Supabase credentials are missing.');
+      return;
+    }
+
+    setConnectionState('checking');
+    setConnectionMessage('Checking Supabase connection...');
+    const { error } = await supabase.from('shop_settings').select('id').limit(1);
+    if (error) {
+      setConnectionState('error');
+      setConnectionMessage(error.message);
+      return;
+    }
+
+    setConnectionState('connected');
+    setConnectionMessage('Supabase connected successfully.');
+  };
+
+  const handleExportBackup = async () => {
+    if (!isSupabaseConfigured) {
+      alert('Supabase is not configured.');
+      return;
+    }
+
+    setIsBackingUp(true);
+    try {
+      const tables: Record<string, unknown[]> = {};
+      for (const table of BACKUP_TABLES) {
+        const { data, error } = await supabase.from(table).select('*');
+        if (error) {
+          throw new Error(`${table}: ${error.message}`);
+        }
+        tables[table] = data || [];
+      }
+
+      const backupPayload = {
+        version: 1,
+        source: 'supabase',
+        exportedAt: new Date().toISOString(),
+        tables,
+      };
+      const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `backup-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Backup failed';
+      alert(msg);
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const replaceTableData = async (table: (typeof BACKUP_TABLES)[number], rows: unknown[]) => {
+    const { error: clearError } = await supabase.from(table).delete().not('id', 'is', null);
+    if (clearError) {
+      throw new Error(`${table} clear failed: ${clearError.message}`);
+    }
+    if (rows.length === 0) return;
+    const { error: insertError } = await supabase.from(table).insert(rows as any[]);
+    if (insertError) {
+      throw new Error(`${table} insert failed: ${insertError.message}`);
+    }
+  };
+
+  const handleRestoreFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = '';
+
+    if (!isSupabaseConfigured) {
+      alert('Supabase is not configured.');
+      return;
+    }
+
+    const confirmed = window.confirm('Restore will replace current database data. Continue?');
+    if (!confirmed) return;
+
+    setIsRestoring(true);
+    try {
+      const raw = await file.text();
+      const parsed = JSON.parse(raw) as { tables?: Record<string, unknown[]> };
+      if (!parsed.tables) {
+        throw new Error('Invalid backup file: missing tables');
+      }
+
+      const rows = (table: (typeof BACKUP_TABLES)[number]) => {
+        const data = parsed.tables?.[table];
+        return Array.isArray(data) ? data : [];
+      };
+
+      await replaceTableData('invoice_items', rows('invoice_items'));
+      await replaceTableData('online_services', rows('online_services'));
+      await replaceTableData('invoices', rows('invoices'));
+      await replaceTableData('customers', rows('customers'));
+      await replaceTableData('office_codes', rows('office_codes'));
+      await replaceTableData('inventory', rows('inventory'));
+      await replaceTableData('transactions', rows('transactions'));
+      await replaceTableData('role_permissions', rows('role_permissions'));
+      await replaceTableData('user_permission_overrides', rows('user_permission_overrides'));
+      await replaceTableData('shop_settings', rows('shop_settings'));
+
+      alert('Restore completed successfully.');
+      await testConnection();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Restore failed';
+      alert(msg);
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const openRestorePicker = () => {
+    restoreFileRef.current?.click();
+  };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    testConnection();
+  }, []);
+
   const addPaymentMethod = () => {
     const method = newPaymentMethod.trim();
     if (!method) return;
@@ -347,30 +498,79 @@ export default function Settings() {
             ))}
           </div>
         </div>
-        {/* Backup & Security */}
+        {/* Database Connection & Backup */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 rounded-lg">
+              <div className="p-2 bg-blue-50 dark:bg-blue-500/10 text-blue-600 rounded-lg">
                 <Database size={20} />
               </div>
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100">{t('backupData')}</h3>
+              <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Database Connection</h3>
             </div>
-            <button type="button" className="w-full py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors">
-              {t('exportData')}
+            <div className="flex items-center gap-2 text-sm">
+              {connectionState === 'connected' ? (
+                <Wifi size={16} className="text-emerald-600" />
+              ) : (
+                <WifiOff size={16} className="text-rose-600" />
+              )}
+              <span
+                className={
+                  connectionState === 'connected'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-600 dark:text-rose-400'
+                }
+              >
+                {connectionMessage}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={testConnection}
+              disabled={connectionState === 'checking'}
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-60 rounded-xl transition-colors"
+            >
+              <RefreshCw size={16} className={connectionState === 'checking' ? 'animate-spin' : ''} />
+              {connectionState === 'checking' ? 'Checking...' : 'Test Connection'}
             </button>
           </div>
 
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-600 rounded-lg">
+              <div className="p-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 rounded-lg">
                 <Shield size={20} />
               </div>
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100">{t('securitySettings')}</h3>
+              <h3 className="font-bold text-zinc-900 dark:text-zinc-100">Backup & Restore</h3>
             </div>
-            <button type="button" className="w-full py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors">
-              {t('changePassword')}
-            </button>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Export current Supabase data as JSON and restore from a backup file.
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                onClick={handleExportBackup}
+                disabled={isBackingUp}
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 rounded-xl transition-colors"
+              >
+                <Download size={16} />
+                {isBackingUp ? 'Exporting...' : 'Export Backup'}
+              </button>
+              <button
+                type="button"
+                onClick={openRestorePicker}
+                disabled={isRestoring}
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-60 rounded-xl transition-colors"
+              >
+                <Upload size={16} />
+                {isRestoring ? 'Restoring...' : 'Restore Backup'}
+              </button>
+              <input
+                ref={restoreFileRef}
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={handleRestoreFile}
+              />
+            </div>
           </div>
         </div>
 

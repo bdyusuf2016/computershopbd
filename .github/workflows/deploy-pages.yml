@@ -36,6 +36,13 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Validate Supabase env
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in repository secrets."
+            exit 1
+          fi
+
       - name: Build
         run: npm run build
 
