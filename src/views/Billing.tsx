@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Printer, Save, Search, User, FileText, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Printer, Save, Search, User, ChevronRight } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { Customer, InvoiceItem, ServiceType } from '../types';
 import {
@@ -38,6 +38,14 @@ export default function Billing() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+  const [customerForm, setCustomerForm] = useState({
+    name: '',
+    mobile: '',
+    email: '',
+    address: '',
+  });
   const [items, setItems] = useState<Partial<InvoiceItem>[]>([
     { service_type: 'printing', description: '', quantity: 1, unit_price: 5, total_price: 5 }
   ]);
@@ -85,6 +93,7 @@ export default function Billing() {
   }, []);
 
   const searchCustomers = async () => {
+    if (!isSupabaseConfigured) return;
     const { data } = await supabase
       .from('customers')
       .select('*')
@@ -117,6 +126,46 @@ export default function Billing() {
 
   const subtotal = items.reduce((sum, item) => sum + (item.total_price || 0), 0);
   const dueAmount = subtotal - paidAmount;
+
+  const resetCustomerForm = () => {
+    setCustomerForm({ name: '', mobile: '', email: '', address: '' });
+    setShowCustomerForm(false);
+  };
+
+  const saveCustomer = async () => {
+    if (!customerForm.name.trim() || !customerForm.mobile.trim()) return;
+
+    setIsSavingCustomer(true);
+
+    try {
+      const payload = {
+        name: customerForm.name.trim(),
+        mobile: customerForm.mobile.trim(),
+        email: customerForm.email.trim() || null,
+        address: customerForm.address.trim() || null,
+      };
+
+      const { data, error } = await supabase
+        .from('customers')
+        .insert([payload])
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setSelectedCustomer(data);
+        setCustomers((prev) => [data, ...prev.filter((customer) => customer.id !== data.id)].slice(0, 5));
+        setSearchQuery('');
+        resetCustomerForm();
+        alert(t('customerSaved'));
+      }
+    } catch (error: any) {
+      alert(t('customerSaveError') + error.message);
+    } finally {
+      setIsSavingCustomer(false);
+    }
+  };
 
   const saveInvoice = async () => {
     if (!selectedCustomer) {
@@ -176,6 +225,7 @@ export default function Billing() {
   const resetForm = () => {
     setSelectedCustomer(null);
     setSearchQuery('');
+    resetCustomerForm();
     setItems([{ service_type: 'printing', description: '', quantity: 1, unit_price: 5, total_price: 5 }]);
     setPaidAmount(0);
     setInvoiceNumber(`INV-${Date.now().toString().slice(-6)}`);
@@ -207,6 +257,19 @@ export default function Billing() {
                   }}
                 />
               </div>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-h-[20px] text-sm text-zinc-500 dark:text-zinc-400">
+                  {selectedCustomer ? `${selectedCustomer.name} • ${selectedCustomer.mobile}` : t('selectCustomer')}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerForm((prev) => !prev)}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                >
+                  <Plus size={16} />
+                  {t('addCustomer')}
+                </button>
+              </div>
               {searchQuery && !selectedCustomer && customers.length > 0 && (
                 <div className="absolute z-20 w-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden">
                   {customers.map(c => (
@@ -225,6 +288,66 @@ export default function Billing() {
                       <ChevronRight size={16} className="text-zinc-400" />
                     </button>
                   ))}
+                </div>
+              )}
+              {showCustomerForm && (
+                <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{t('addCustomerInline')}</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">{t('createCustomerAndSelect')}</p>
+                    </div>
+                    <User size={18} className="text-zinc-400" />
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <input
+                      required
+                      type="text"
+                      placeholder={t('fullName')}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      value={customerForm.name}
+                      onChange={(e) => setCustomerForm({ ...customerForm, name: e.target.value })}
+                    />
+                    <input
+                      required
+                      type="tel"
+                      placeholder={t('mobileNumber')}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      value={customerForm.mobile}
+                      onChange={(e) => setCustomerForm({ ...customerForm, mobile: e.target.value })}
+                    />
+                    <input
+                      type="email"
+                      placeholder={t('emailAddress')}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      value={customerForm.email}
+                      onChange={(e) => setCustomerForm({ ...customerForm, email: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      placeholder={t('address')}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                      value={customerForm.address}
+                      onChange={(e) => setCustomerForm({ ...customerForm, address: e.target.value })}
+                    />
+                  </div>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={resetCustomerForm}
+                      className="rounded-xl bg-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    >
+                      {t('cancel')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isSavingCustomer || !customerForm.name.trim() || !customerForm.mobile.trim()}
+                      onClick={saveCustomer}
+                      className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isSavingCustomer ? (language === 'bn' ? 'সেভ হচ্ছে...' : 'Saving...') : t('save')}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
